@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Cart } from "./Cart";
 import { Header } from "./Header";
 import { ProductList } from "./ProductList";
-import { api } from "./services/api";
-import { DivProductCart } from "./styles/app";
+import { api } from "./Services/api";
+import { DivProductCart } from "./Styles/app";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
