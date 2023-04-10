@@ -1,121 +1,95 @@
-import { api } from "./Services/api";
-import "./App.css";
-import { Header } from "./Components/Header/Header";
 import { useEffect, useState } from "react";
-import { ProductsList } from "./Components/ProductsList/ProductsList";
-import { Cart } from "./Components/Cart/Cart";
+import { Cart } from "./Cart";
+import { Header } from "./Header";
+import { ProductList } from "./ProductList";
+import { api } from "./services/api";
+import { DivProductCart } from "./styles/app";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 
 function App() {
-    const localProducts = localStorage.getItem("@PRODUCTSHAMBURGUERIA");
-    const [loading, setLoading] = useState(false);
-    const [products, setProducts] = useState([]);
-    const [cartProducts, setCartProducts] = useState(
-      localProducts ? JSON.parse(localProducts) : []
-    );
-    const [search, setSearch] = useState("");
-  
-    useEffect(() => {
-      async function loadProductsData() {
-        try {
-          setLoading(true);
-          const response = await api.get("products");
-          setProducts(response.data);
-        } catch (error) {
-          console.log(error);
-        } finally {
-          setLoading(false);
-        }
-      }
-      loadProductsData();
-    }, []);
-  
-    const searchProducts = products.filter((product) => {
-      return search === ""
-        ? true
-        : product.name.toLowerCase().includes(search.toLowerCase());
-    });
-  
-    useEffect(() => {
-      localStorage.setItem("@PRODUCTSHAMBURGUERIA", JSON.stringify(cartProducts));
-    }, [cartProducts]);
-  
-    function addToCart(currentProduct) {
-      if (!cartProducts.some((product) => product.id === currentProduct.id)) {
-        setCartProducts([...cartProducts, currentProduct]);
-        toast.success("Seu produto foi adicionado ao carrinho");
-      } else {
-        toast.error("Esse produto já foi adicionado no carrinho de compras");
+  const localStorageProduct = localStorage.getItem("@PRODUCT");
+  const [products, setProducts] = useState([]);
+  const [productCart, setProductCart] = useState(
+    localStorageProduct ? JSON.parse(localStorageProduct) : []
+  );
+  const [filteredProducts, setFilteredProducts] = useState("");
+
+  const filterProduct = products.filter((product) => {
+    return filteredProducts.trim() === ""
+      ? true
+      : product.category
+          .toLowerCase()
+          .includes(filteredProducts.toLowerCase()) ||
+          product.name
+            .toLowerCase()
+            .trim()
+            .includes(filteredProducts.toLowerCase().trim());
+  });
+
+  useEffect(() => {
+    async function loadApi() {
+      try {
+        const response = await api.get("products");
+
+        setProducts(response.data);
+      } catch (error) {
+        console.log(error);
       }
     }
-  
-    function removeToCart(productId) {
-      const newCartProducts = cartProducts.filter(
-        (product) => product.id !== productId
-      );
-      setCartProducts(newCartProducts);
-      localStorage.setItem(
-        "@PRODUCTSHAMBURGUERIA",
-        JSON.stringify(newCartProducts)
-      );
-      toast.warning("Você removeu o produto do carrinho");
+    loadApi();
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("@PRODUCT", JSON.stringify(productCart));
+  }, [productCart]);
+
+  const addCart = (currentProduct) => {
+    if (!productCart.some((product) => product.id === currentProduct.id)) {
+      setProductCart([...productCart, currentProduct]);
+      toast.success("Item adicionado ao carrinho!");
+    } else {
+      toast.error("Item já está no carrinho!");
     }
-  
-    function totalCart(products) {
-      const cartTotal = products.reduce((previousValue, currentValue) => {
-        return previousValue + currentValue.price;
-      }, 0);
-  
-      return cartTotal;
-    }
-    const total = totalCart(cartProducts);
-  
-    function removeAllProducts() {
-      setCartProducts([]);
-      toast.warning("Você removeu todos os produtos do carrinho");
-    }
-  
-    return (
-      <div className="App">
-        {loading ? (
-          <p className="loadingMsg">Carregando...</p>
-        ) : (
-          <>
-            <Header setSearch={setSearch} />
-  
-            <div className="container">
-              <ProductsList
-                addToCart={addToCart}
-                searchProducts={searchProducts}
-              />
-              <Cart
-                addToCart={addToCart}
-                removeToCart={removeToCart}
-                products={products}
-                cartProducts={cartProducts}
-                setCartProducts={setCartProducts}
-                total={total}
-                removeAllProducts={removeAllProducts}
-              />
-            </div>
-          </>
-        )}
-        <ToastContainer
-          position="top-center"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
+  };
+
+  const removeCart = (currentId) => {
+    const newCart = productCart.filter((product) => product.id !== currentId);
+    setProductCart(newCart);
+    toast.error("Item removido!");
+  };
+
+  const totalDelete = () => {
+    setProductCart([]);
+    toast.warning("Itens removidos, Sacola vazia!");
+  };
+
+  return (
+    <div className="App">
+      <Header setFilteredProducts={setFilteredProducts} />
+      <DivProductCart>
+        <ProductList filterProduct={filterProduct} addCart={addCart} />
+        <Cart
+          productCart={productCart}
+          removeCart={removeCart}
+          totalDelete={totalDelete}
         />
-      </div>
-    );
-  }
-  export default App;
-  
+      </DivProductCart>
+      <ToastContainer
+        position="top-right"
+        autoClose={1000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+    </div>
+  );
+}
+
+export default App;
