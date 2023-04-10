@@ -22,3 +22,5 @@ export const InputSearch = ({ setFilteredProducts }) => {
     </FormInput>
   );
 };
+
+
